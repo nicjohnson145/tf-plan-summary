@@ -26,7 +26,8 @@ var (
 	create = []string{Create}
 	read = []string{Read}
 	update = []string{Update}
-	recreate = []string{Delete, Create}
+	deleteCreate = []string{Delete, Create}
+	createDelete = []string{Create, Delete}
 	delete_ = []string{Delete}
 )
 
@@ -90,7 +91,9 @@ func getOutput(change ChangeRepr) *Output {
 		o.Type = Read
 	case arrayEqual(change.Change.Actions, update):
 		o.Type = Update
-	case arrayEqual(change.Change.Actions, recreate):
+	case arrayEqual(change.Change.Actions, deleteCreate):
+		o.Type = Recreate
+	case arrayEqual(change.Change.Actions, createDelete):
 		o.Type = Recreate
 	case arrayEqual(change.Change.Actions, delete_):
 		o.Type = Delete
