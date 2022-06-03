@@ -6,6 +6,8 @@ import (
 	"os"
 	"io/ioutil"
 	"encoding/json"
+	"sort"
+	"strings"
 )
 
 const (
@@ -21,6 +23,7 @@ const (
 
 var (
 	excludeReads bool
+	noTrimPrefix bool
 
 	no_op = []string{No_Op}
 	create = []string{Create}
@@ -35,6 +38,7 @@ func init() {
 	usage := "Exclude read operations from being displayed"
 	flag.BoolVar(&excludeReads, "exclude-reads", false, usage)
 	flag.BoolVar(&excludeReads, "x", false, usage+" (shorthand)")
+	flag.BoolVar(&noTrimPrefix, "no-trim", false, "don't trim the common prefix from addresses")
 }
 
 type Change struct {
@@ -104,6 +108,37 @@ func getOutput(change ChangeRepr) *Output {
 	return o
 }
 
+func trimPrefix(changes []*Output) {
+	addresses := []string{}
+	for _, c := range changes {
+		addresses = append(addresses, c.Address)
+	}
+
+	sort.Strings(addresses)
+
+	if len(addresses) < 2 {
+		return
+	}
+
+	charCount := len(addresses[0])
+	if len(addresses[1]) < len(addresses[0]) {
+		charCount = len(addresses[1])
+	}
+
+	prefix := ""
+	for i := 0; i < charCount; i++ {
+		if addresses[0][i] == addresses[1][i] {
+			prefix = prefix + fmt.Sprintf("%c", addresses[0][i])
+		} else {
+			break
+		}
+	}
+
+	for _, c := range changes {
+		c.Address = strings.TrimPrefix(c.Address, prefix)
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -131,6 +166,10 @@ func main() {
 		}
 
 		changes = append(changes, output)
+	}
+
+	if !noTrimPrefix {
+		trimPrefix(changes)
 	}
 
 	for _, change := range changes {
