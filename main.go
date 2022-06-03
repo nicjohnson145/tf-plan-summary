@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"github.com/fatih/color"
 )
 
 const (
@@ -20,6 +21,15 @@ const (
 	// Pseudo state
 	Recreate = "recreate"
 )
+
+var colorMap = map[string]color.Attribute{
+	No_Op: color.FgWhite,
+	Create: color.FgGreen,
+	Read: color.FgWhite,
+	Update: color.FgYellow,
+	Delete: color.FgRed,
+	Recreate: color.FgRed,
+}
 
 var (
 	excludeReads bool
@@ -61,6 +71,12 @@ type Output struct {
 
 func (o Output) String() string {
 	return fmt.Sprintf("(%8v) %v", o.Type, o.Address)
+}
+
+func (o Output) Print() {
+	color.Set(colorMap[o.Type])
+	defer color.Unset()
+	fmt.Printf("(%8v) %v\n", o.Type, o.Address)
 }
 
 func ok(err error, msg string) {
@@ -173,6 +189,6 @@ func main() {
 	}
 
 	for _, change := range changes {
-		fmt.Println(change)
+		change.Print()
 	}
 }
